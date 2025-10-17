@@ -83,7 +83,7 @@
 **이름**|박지민|<img width="100" height="150" alt="image" src="https://github.com/user-attachments/assets/d14778ac-5a20-4909-a6ec-0ae19da9c9c5" />|
 **연락처**|이메일|jimin1299@naver.com|
 **학력**|숭실대학교 소프트웨어학부|2019.03~2024.08|
-**Skill set**|Language|Java, Python, C, Typescript, JSP
+**Skill set**|Language|Java, Python, C, Typescript
 ||Framework & Library|Spring Boot, Django, React Native|
 ||Database|MySQL, Oracle, Redis|
 ||ETC|Git, AWS, GCP, Docker|
