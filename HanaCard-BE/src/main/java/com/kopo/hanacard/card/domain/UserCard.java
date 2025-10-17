@@ -3,6 +3,7 @@ package com.kopo.hanacard.card.domain;
 import com.kopo.hanacard.common.domain.DateTimeEntity;
 import com.kopo.hanacard.user.domain.User;
 import jakarta.persistence.*;
+import org.hibernate.annotations.GenericGenerator;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
@@ -17,7 +18,8 @@ import java.time.LocalDate;
 public class UserCard extends DateTimeEntity {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "user_cards_seq")
+    @SequenceGenerator(name = "user_cards_seq", sequenceName = "USER_CARDS_SEQ", allocationSize = 1)
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)

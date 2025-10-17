@@ -2,6 +2,7 @@ package com.kopo.hanacard.hanamoney.domain;
 
 import com.kopo.hanacard.common.domain.DateTimeEntity;
 import jakarta.persistence.*;
+import org.hibernate.annotations.GenericGenerator;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
@@ -14,7 +15,8 @@ import lombok.NoArgsConstructor;
 public class HanamoneyTransaction extends DateTimeEntity {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "hanamoney_transactions_seq")
+    @SequenceGenerator(name = "hanamoney_transactions_seq", sequenceName = "HANAMONEY_TRANSACTIONS_SEQ", allocationSize = 1)
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)

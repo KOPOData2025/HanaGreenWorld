@@ -18,7 +18,7 @@ public class WebhookService {
 
     private final RestTemplate restTemplate;
 
-    @Value("${integration.greenworld.url:http://localhost:8080}")
+    @Value("${integration.hanagreenworld.url}")
     private String greenWorldBaseUrl;
 
     public void sendCardTransactionWebhook(CardTransaction transaction) {

@@ -251,11 +251,10 @@ public class CardIntegrationController {
             return ResponseEntity.ok(response);
             
         } catch (Exception e) {
-            Map<String, Object> errorResponse = Map.of(
-                "success", false,
-                "message", "하나머니 적립 실패: " + e.getMessage(),
-                "data", null
-            );
+            Map<String, Object> errorResponse = new HashMap<>();
+            errorResponse.put("success", false);
+            errorResponse.put("message", "하나머니 적립 실패: " + e.getMessage());
+            errorResponse.put("data", null);
             
             return ResponseEntity.status(500).body(errorResponse);
         }
