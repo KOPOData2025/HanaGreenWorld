@@ -10,7 +10,8 @@
 4. [시스템 아키텍처](#4-시스템-아키텍처)
 5. [활용 기술](#5-활용-기술)
 6. [특화 기술](#6-특화-기술)
-7. [개발 정보](#7-개발-정보)
+7. [프로젝트 구조](#7-프로젝트-구조)
+8. [개발 정보](#8-개발-정보)
 
 <br>
 
@@ -67,7 +68,40 @@
 
 <br><br>
 
-## 7. 개발 정보
+## 7. 프로젝트 구조
+
+```
+HanaGreenWorld/
+├── AI-Server/ # AI 서비스 (Python/Django)
+│ ├── ai_server/ # Django 설정
+│ └── ai_services/ # AI 서비스 로직
+│ └── services/ # Gemini, GPT, RAG 등 AI 서비스
+│
+├── HanaBank-BE/ # 하나은행 백엔드 (Java/Spring)
+│ └── src/main/java/com/kopo/ # Java 소스코드
+│
+├── HanaCard-BE/ # 하나카드 백엔드 (Java/Spring)
+│ └── src/main/java/com/ # Java 소스코드
+│
+├── HanaGreenWorld-BE/ # 하나그린세상 백엔드 (Java/Spring)
+│ └── src/main/java/com/ # Java 소스코드
+│
+└── HanaGreenWorld-FE/ # 하나그린세상 프론트엔드 (React Native/Expo)
+├── src/
+│ ├── components/ # UI 컴포넌트
+│ ├── screens/ # 화면 컴포넌트
+│ ├── hooks/ # 커스텀 훅
+│ ├── services/ # API 서비스
+│ └── utils/ # 유틸리티 함수
+├── assets/ # 이미지, 아이콘 등
+├── android/ # 안드로이드 설정
+└── ios/ # iOS 설정
+
+```
+
+<br><br>
+
+## 8. 개발 정보
 
 - **개발 기간**: 2025.09.01 ~ 2025.10.24
 - **개발 인원**: 1인 (풀스택 개발)
