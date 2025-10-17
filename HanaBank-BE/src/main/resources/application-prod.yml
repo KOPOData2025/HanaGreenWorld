@@ -1,0 +1,27 @@
+server:
+  port: ${PORT:8080}
+
+spring:
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    show-sql: false
+
+logging:
+  level:
+    com.kopo.hanabank: INFO
+    org.springframework.web: WARN
+    org.hibernate.SQL: WARN
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -1,0 +1,24 @@
+# 프로덕션 환경 설정
+server:
+  port: ${PORT:8080}
+  shutdown: graceful
+
+spring:
+  lifecycle:
+    timeout-per-shutdown-phase: 30s
+
+# 프로덕션 환경 로깅 설정
+logging:
+  level:
+    com.kopo.hanagreenworld: INFO
+    org.springframework.security: WARN
+    org.springframework.web: WARN
+    org.springframework.data.redis: WARN
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} - %msg%n"
+
+# 프로덕션 환경 자동 로그인 비활성화
+app:
+  dev:
+    auto-login:
+      enabled: false

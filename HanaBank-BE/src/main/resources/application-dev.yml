@@ -1,0 +1,7 @@
+# 로깅 설정 (개발 환경)
+logging:
+  level:
+    com.kopo.hanabank: DEBUG
+    org.springframework.web: DEBUG
+    org.hibernate.SQL: DEBUG
+    org.hibernate.type.descriptor.sql.BasicBinder: TRACE

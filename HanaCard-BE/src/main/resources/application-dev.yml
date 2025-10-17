@@ -1,0 +1,12 @@
+server:
+  address: 0.0.0.0
+  port: ${PORT:8083} 
+
+# 로깅 설정 (개발 환경)
+logging:
+  level:
+    com.kopo.hanacard: DEBUG
+    org.springframework.web: DEBUG
+    org.hibernate.SQL: DEBUG
+    org.hibernate.type.descriptor.sql.BasicBinder: TRACE
+    oracle.jdbc: DEBUG
