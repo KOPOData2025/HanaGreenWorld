@@ -17,7 +17,6 @@ interface EcoReportScreenProps {
 export default function EcoReportScreen({ onBack, onHome, onOpenDetail }: EcoReportScreenProps) {
   const [reports, setReports] = useState<EcoReport[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     loadReports();
@@ -26,24 +25,13 @@ export default function EcoReportScreen({ onBack, onHome, onOpenDetail }: EcoRep
   const loadReports = async () => {
     try {
       setLoading(true);
-      setError(null);
       
-      // 먼저 기존 리포트 조회 시도
+      // 기존 리포트 조회만 시도
       const apiReports = await fetchEcoReports();
       console.log('🔍 EcoReportScreen - API에서 받은 리포트 데이터:');
       console.log('  - 리포트 개수:', apiReports.length);
       
-      if (apiReports.length === 0) {
-        // 리포트가 없으면 현재 월 리포트 생성 시도
-        try {
-          const currentReport = await fetchCurrentMonthReport();
-          console.log('🔍 EcoReportScreen - 새로 생성된 리포트:', currentReport);
-          setReports([currentReport]);
-        } catch (generateError) {
-          console.error('리포트 생성 실패:', generateError);
-          setError('리포트를 생성하는데 실패했습니다.');
-        }
-      } else {
+      if (apiReports.length > 0) {
         apiReports.forEach((report, index) => {
           console.log(`🔍 EcoReportScreen - 리포트 #${index + 1}:`, {
             reportMonth: report.reportMonth,
@@ -51,11 +39,13 @@ export default function EcoReportScreen({ onBack, onHome, onOpenDetail }: EcoRep
             activities: report.activities.map(a => ({ label: a.label, count: a.count, points: a.points }))
           });
         });
-        setReports(apiReports);
       }
+      
+      setReports(apiReports);
     } catch (err) {
       console.error('리포트 로딩 실패:', err);
-      setError('리포트를 불러오는데 실패했습니다.');
+      // 에러가 발생해도 빈 배열로 설정하여 빈 화면 표시
+      setReports([]);
     } finally {
       setLoading(false);
     }
@@ -78,34 +68,7 @@ export default function EcoReportScreen({ onBack, onHome, onOpenDetail }: EcoRep
     );
   }
 
-  if (error) {
-    return (
-      <View style={styles.container}>
-        <TopBar title="친환경 리포트" onBack={onBack} onHome={onHome} />
-        <View style={styles.errorContainer}>
-          <Text style={styles.errorText}>{error}</Text>
-          <Pressable style={styles.retryButton} onPress={loadReports}>
-            <Text style={styles.retryButtonText}>다시 시도</Text>
-          </Pressable>
-        </View>
-      </View>
-    );
-  }
 
-  if (reports.length === 0) {
-    return (
-      <View style={styles.container}>
-        <TopBar title="친환경 리포트" onBack={onBack} onHome={onHome} />
-        <View style={styles.emptyContainer}>
-          <Text style={styles.emptyText}>아직 생성된 리포트가 없습니다.</Text>
-          <Text style={styles.emptySubText}>친환경 활동을 시작해보세요!</Text>
-          <Pressable style={styles.generateReportButton} onPress={loadReports}>
-            <Text style={styles.generateReportButtonText}>리포트 생성하기</Text>
-          </Pressable>
-        </View>
-      </View>
-    );
-  }
 
   return (
     <View style={styles.container}>
@@ -124,35 +87,45 @@ export default function EcoReportScreen({ onBack, onHome, onOpenDetail }: EcoRep
 
         {/* 리포트 목록 */}
         <View>
-          <View style={styles.menuList}>
-            {reports.map((report, idx) => (
-              <Pressable 
-                key={report.reportId} 
-                style={[styles.menuItem, idx === reports.length - 1 && styles.lastMenuItem]} 
-                onPress={() => onOpenDetail(report)}
-              >
-                <View style={styles.menuItemLeft}>
-                  <View>
-                    <View style={styles.titleContainer}>
-                      <Text style={styles.menuTitle}>{report.reportMonth}</Text>
-                      {idx === 0 && (
-                        <View style={styles.newBadge}>
-                          <Text style={styles.newBadgeText}>NEW</Text>
-                        </View>
-                      )}
+          {reports.length > 0 ? (
+            <View style={styles.menuList}>
+              {reports.map((report, idx) => (
+                <Pressable 
+                  key={report.reportId} 
+                  style={[styles.menuItem, idx === reports.length - 1 && styles.lastMenuItem]} 
+                  onPress={() => onOpenDetail(report)}
+                >
+                  <View style={styles.menuItemLeft}>
+                    <View>
+                      <View style={styles.titleContainer}>
+                        <Text style={styles.menuTitle}>{report.reportMonth}</Text>
+                        {idx === 0 && (
+                          <View style={styles.newBadge}>
+                            <Text style={styles.newBadgeText}>NEW</Text>
+                          </View>
+                        )}
+                      </View>
+                      <Text style={styles.menuSubtitle}>
+                        씨앗 {safeNumber(report.statistics.totalSeeds).toLocaleString()}개 · 탄소 {safeNumber(report.statistics.totalCarbonKg)}kg 절감
+                      </Text>
+                      <Text style={styles.menuLevel}>
+                        {report.summary.currentLevel} · 진행률 {safeNumber(report.summary.levelProgress)}%
+                      </Text>
                     </View>
-                    <Text style={styles.menuSubtitle}>
-                      씨앗 {safeNumber(report.statistics.totalSeeds).toLocaleString()}개 · 탄소 {safeNumber(report.statistics.totalCarbonKg)}kg 절감
-                    </Text>
-                    <Text style={styles.menuLevel}>
-                      {report.summary.currentLevel} · 진행률 {safeNumber(report.summary.levelProgress)}%
-                    </Text>
                   </View>
-                </View>
-                <Text style={styles.chevron}>›</Text>
-              </Pressable>
-            ))}
-          </View>
+                  <Text style={styles.chevron}>›</Text>
+                </Pressable>
+              ))}
+            </View>
+          ) : (
+            <View style={styles.emptyListContainer}>
+              <Text style={styles.emptyListText}>아직 친환경 활동 리포트가 없어요</Text>
+              <Text style={styles.emptyListSubText}>
+                걷기, 챌린지, 퀴즈 등 다양한 친환경 활동을{'\n'}
+                진행해보세요! 활동하시면 리포트가 생성됩니다.
+              </Text>
+            </View>
+          )}
         </View>
 
         <View style={{ height: 60 * SCALE }} />
@@ -233,58 +206,57 @@ const styles = StyleSheet.create({
     color: '#6B7280', 
     marginTop: 16 * SCALE 
   },
-  errorContainer: { 
-    flex: 1, 
-    justifyContent: 'center', 
-    alignItems: 'center', 
-    padding: 40 * SCALE 
+  emptyListContainer: { 
+    backgroundColor: '#FFFFFF', 
+    borderRadius: 16 * SCALE, 
+    padding: 32 * SCALE,
+    alignItems: 'center',
+    borderWidth: 1, 
+    borderColor: '#F3F4F6'
   },
-  errorText: { 
-    fontSize: 16 * SCALE, 
-    color: '#EF4444', 
-    textAlign: 'center', 
-    marginBottom: 20 * SCALE 
+  emptyListIconContainer: {
+    marginBottom: 20 * SCALE
   },
-  retryButton: { 
-    backgroundColor: '#10B981', 
-    paddingHorizontal: 24 * SCALE, 
-    paddingVertical: 12 * SCALE, 
-    borderRadius: 8 * SCALE 
+  emptyListIcon: {
+    fontSize: 48 * SCALE,
+    textAlign: 'center'
   },
-  retryButtonText: { 
-    color: '#FFFFFF', 
-    fontSize: 16 * SCALE, 
-    fontWeight: '600' 
-  },
-  emptyContainer: { 
-    flex: 1, 
-    justifyContent: 'center', 
-    alignItems: 'center', 
-    padding: 40 * SCALE 
-  },
-  emptyText: { 
+  emptyListText: { 
     fontSize: 18 * SCALE, 
     color: '#374151', 
     fontWeight: '600', 
-    marginBottom: 8 * SCALE 
+    marginBottom: 8 * SCALE,
+    textAlign: 'center'
   },
-  emptySubText: { 
+  emptyListSubText: { 
     fontSize: 14 * SCALE, 
     color: '#6B7280',
-    marginBottom: 20 * SCALE
+    marginBottom: 24 * SCALE,
+    textAlign: 'center',
+    lineHeight: 20 * SCALE
   },
-  generateReportButton: {
-    backgroundColor: '#10B981',
-    paddingHorizontal: 24 * SCALE,
-    paddingVertical: 12 * SCALE,
-    borderRadius: 8 * SCALE,
-    marginTop: 8 * SCALE
+  activitySuggestions: {
+    backgroundColor: '#F9FAFB',
+    borderRadius: 16 * SCALE,
+    padding: 20 * SCALE,
+    width: '100%',
+    maxWidth: 320 * SCALE
   },
-  generateReportButtonText: {
-    color: '#FFFFFF',
+  suggestionTitle: {
     fontSize: 16 * SCALE,
     fontWeight: '600',
+    color: '#374151',
+    marginBottom: 16 * SCALE,
     textAlign: 'center'
+  },
+  suggestionList: {
+    gap: 12 * SCALE
+  },
+  suggestionItem: {
+    fontSize: 14 * SCALE,
+    color: '#6B7280',
+    textAlign: 'center',
+    lineHeight: 20 * SCALE
   },
 });
 

@@ -139,8 +139,9 @@ public class EcoMerchantMatchingService {
     public List<Map<String, Object>> getUserEcoMerchantHistory(Long userId) {
 
         try {
+            // 이번달 거래 내역만 조회
             List<EcoMerchantTransaction> transactions = ecoMerchantTransactionRepository
-                .findByMember_MemberIdOrderByTransactionDateDesc(userId);
+                .findCurrentMonthTransactionsByMemberId(userId);
             
             List<Map<String, Object>> history = new ArrayList<>();
             

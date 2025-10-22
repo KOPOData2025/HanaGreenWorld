@@ -61,7 +61,7 @@ public class ChallengeListResponse {
         switch (code) {
             case REUSABLE_BAG:
             case REUSABLE_BAG_EXTENDED:
-                return "/static/assets/hana3dIcon/hanaIcon3d_4_13.png";
+                return "/static/assets/hana3dIcon/hanaIcon3d_4_121.png";
             case PLUGGING:
             case PLUGGING_MARATHON:
             case TEAM_PLUGGING:

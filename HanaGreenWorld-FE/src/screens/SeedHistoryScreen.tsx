@@ -106,7 +106,9 @@ export default function SeedHistoryScreen({ onBack }: SeedHistoryScreenProps) {
   };
 
   const groupedRecords = groupByDate(challengeRecords);
-  const totalSeeds = challengeRecords.reduce((sum, record) => sum + (record.pointsAwarded || 0), 0);
+  const totalSeeds = challengeRecords.reduce((sum, record) => {
+    return sum + (record.pointsAwarded || 0);
+  }, 0);
 
   return (
     <View style={styles.container}>
@@ -168,7 +170,7 @@ export default function SeedHistoryScreen({ onBack }: SeedHistoryScreenProps) {
                          record.verificationStatus === 'REJECTED' ? '챌린지 실패' :
                          record.verificationStatus === 'NEEDS_REVIEW' ? '검토 대기' :
                          record.verificationStatus === 'PENDING' ? '검증 중' :
-                         '참여완료'}
+                         '도전 중'}
                       </Text>
                       {record.imageUrl && (
                         <View style={styles.imageBadge}>
@@ -180,11 +182,13 @@ export default function SeedHistoryScreen({ onBack }: SeedHistoryScreenProps) {
                     <View style={styles.seedReward}>
                       <Text style={styles.seedRewardText}>
                         {record.verificationStatus === 'APPROVED' ? 
-                          `+${record.pointsAwarded || 0} 씨앗` :
+                          (record.challenge.isTeamChallenge ? 
+                            `+${record.teamScoreAwarded || 0}P` : 
+                            `+${record.pointsAwarded || 0} 씨앗`) :
                           record.verificationStatus === 'REJECTED' ? '실패' :
                           record.verificationStatus === 'NEEDS_REVIEW' ? '검토 대기' :
                           record.verificationStatus === 'PENDING' ? '검증 중' :
-                          '참여완료'
+                          '도전 중'
                         }
                       </Text>
                     </View>
@@ -288,10 +292,16 @@ export default function SeedHistoryScreen({ onBack }: SeedHistoryScreenProps) {
                         {new Date(selectedRecord.activityDate).toLocaleDateString('ko-KR')}
                       </Text>
                     </View>
-                    {selectedRecord.pointsAwarded && (
+                    {(selectedRecord.pointsAwarded || selectedRecord.teamScoreAwarded) && (
                       <View style={styles.infoRow}>
-                        <Text style={styles.infoLabel}>획득 씨앗:</Text>
-                        <Text style={styles.infoValue}>+{selectedRecord.pointsAwarded} 씨앗</Text>
+                        <Text style={styles.infoLabel}>
+                          {selectedRecord.challenge.isTeamChallenge ? '획득 포인트:' : '획득 씨앗:'}
+                        </Text>
+                        <Text style={styles.infoValue}>
+                          {selectedRecord.challenge.isTeamChallenge ? 
+                            `+${selectedRecord.teamScoreAwarded || 0}P` : 
+                            `+${selectedRecord.pointsAwarded || 0} 씨앗`}
+                        </Text>
                       </View>
                     )}
                   </View>

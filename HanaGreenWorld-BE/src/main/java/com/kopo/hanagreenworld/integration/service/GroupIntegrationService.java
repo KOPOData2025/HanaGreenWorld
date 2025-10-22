@@ -2,6 +2,7 @@ package com.kopo.hanagreenworld.integration.service;
 
 import com.kopo.hanagreenworld.integration.dto.IntegratedCustomerInfoRequest;
 import com.kopo.hanagreenworld.integration.dto.IntegratedCustomerInfoResponse;
+import com.kopo.hanagreenworld.integration.util.LoanCalculationUtil;
 import com.kopo.hanagreenworld.member.domain.Member;
 import com.kopo.hanagreenworld.member.repository.MemberRepository;
 import lombok.RequiredArgsConstructor;
@@ -63,7 +64,7 @@ public class GroupIntegrationService {
             List<String> targetServices = Arrays.asList(request.getTargetServices());
 
             if (targetServices.contains("BANK") || targetServices.contains("ALL")) {
-                bankInfo = getBankInfo(internalServiceToken, customerInfoToken, consentToken, request.getInfoType());
+                bankInfo = getBankInfo(internalServiceToken, customerInfoToken, consentToken, request.getInfoType(), request.getMemberId());
             }
 
             if (targetServices.contains("CARD") || targetServices.contains("ALL")) {
@@ -77,7 +78,7 @@ public class GroupIntegrationService {
         }
     }
 
-    private IntegratedCustomerInfoResponse.BankInfo getBankInfo(String internalServiceToken, String customerInfoToken, String consentToken, String infoType) {
+    private IntegratedCustomerInfoResponse.BankInfo getBankInfo(String internalServiceToken, String customerInfoToken, String consentToken, String infoType, Long memberId) {
         try {
             String url = bankServiceUrl + "/api/integration/customer-info";
 
@@ -231,18 +232,71 @@ public class GroupIntegrationService {
 
             if (products != null) {
                 for (Map<String, Object> product : products) {
+                    
+                    // 기본 정보 설정
+                    String productType = product.get("productType") != null ? product.get("productType").toString() : "";
+                    BigDecimal amount = product.get("amount") != null ? new BigDecimal(product.get("amount").toString()) : BigDecimal.ZERO;
+                    BigDecimal interestRate = product.get("interestRate") != null ? new BigDecimal(product.get("interestRate").toString()) : null;
+                    java.time.LocalDateTime startDate = product.get("startDate") != null ? java.time.LocalDateTime.parse(product.get("startDate").toString()) : null;
+                    java.time.LocalDateTime maturityDate = product.get("maturityDate") != null ? java.time.LocalDateTime.parse(product.get("maturityDate").toString()) : null;
+                    
+                    // 월 상환금과 월 이자 계산 (대출 상품인 경우)
+                    BigDecimal monthlyPayment = null;
+                    BigDecimal monthlyInterest = null;
+                    BigDecimal totalMonthlyPayment = null;
+                    BigDecimal preferentialRate = null;
+                    
+                    if (isLoanProduct(productType) && amount.compareTo(BigDecimal.ZERO) > 0) {
+                        // 대출 상품이고 금액이 있는 경우 계산
+                        BigDecimal defaultInterestRate = interestRate != null ? interestRate : new BigDecimal("4.5");
+                        java.time.LocalDateTime defaultStartDate = startDate != null ? startDate : java.time.LocalDateTime.now().minusYears(2);
+                        java.time.LocalDateTime defaultMaturityDate = maturityDate != null ? maturityDate : java.time.LocalDateTime.now().plusYears(3);
+                        BigDecimal remainingAmount = product.get("remainingAmount") != null ? new BigDecimal(product.get("remainingAmount").toString()) : amount;
+                        
+                        // 기존 monthlyPayment가 있으면 우선 사용
+                        if (product.get("monthlyPayment") != null) {
+                            monthlyPayment = new BigDecimal(product.get("monthlyPayment").toString());
+                        } else {
+                            monthlyPayment = LoanCalculationUtil.calculateMonthlyPaymentFromLoanInfo(
+                                    amount,
+                                    defaultInterestRate.divide(new BigDecimal("100")), // 퍼센트를 소수로 변환
+                                    defaultStartDate,
+                                    defaultMaturityDate
+                            );
+                        }
+                        
+                        // 월 이자는 항상 현재 잔여금액 기준으로 계산
+                        monthlyInterest = LoanCalculationUtil.calculateMonthlyInterest(
+                                remainingAmount,
+                                defaultInterestRate.divide(new BigDecimal("100")) // 퍼센트를 소수로 변환
+                        );
+                        
+                        // 총 월 납입금 = 월 상환금 + 월 이자
+                        totalMonthlyPayment = monthlyPayment.add(monthlyInterest);
+                        
+                        // 우대금리는 기존 데이터에서 가져오기
+                        if (product.get("preferentialRate") != null) {
+                            preferentialRate = new BigDecimal(product.get("preferentialRate").toString());
+                        } else {
+                            // 기본 우대금리 설정
+                            preferentialRate = new BigDecimal("1.0"); // 기본 우대금리 1.0%
+                        }
+                    }
+                    
                     productDetails.add(IntegratedCustomerInfoResponse.BankInfo.ProductDetail.builder()
                             .productCode(product.get("productCode") != null ? product.get("productCode").toString() : "")
                             .productName(product.get("productName") != null ? product.get("productName").toString() : "")
-                            .productType(product.get("productType") != null ? product.get("productType").toString() : "")
-                            .amount(product.get("amount") != null ? new BigDecimal(product.get("amount").toString()) : BigDecimal.ZERO)
+                            .productType(productType)
+                            .amount(amount)
                             .remainingAmount(product.get("remainingAmount") != null ? new BigDecimal(product.get("remainingAmount").toString()) : null)
-                            .interestRate(product.get("interestRate") != null ? new BigDecimal(product.get("interestRate").toString()) : null)
+                            .interestRate(interestRate)
                             .baseRate(product.get("baseRate") != null ? new BigDecimal(product.get("baseRate").toString()) : null)
-                            .preferentialRate(product.get("preferentialRate") != null ? new BigDecimal(product.get("preferentialRate").toString()) : null)
-                            .monthlyPayment(product.get("monthlyPayment") != null ? new BigDecimal(product.get("monthlyPayment").toString()) : null)
-                            .startDate(product.get("startDate") != null ? java.time.LocalDateTime.parse(product.get("startDate").toString()) : null)
-                            .maturityDate(product.get("maturityDate") != null ? java.time.LocalDateTime.parse(product.get("maturityDate").toString()) : null)
+                            .preferentialRate(preferentialRate != null ? preferentialRate : (product.get("preferentialRate") != null ? new BigDecimal(product.get("preferentialRate").toString()) : null))
+                            .monthlyPayment(monthlyPayment)
+                            .monthlyInterest(monthlyInterest)
+                            .totalMonthlyPayment(totalMonthlyPayment)
+                            .startDate(startDate)
+                            .maturityDate(maturityDate)
                             .subscriptionDate(product.get("subscriptionDate") != null ? java.time.LocalDateTime.parse(product.get("subscriptionDate").toString()) : null)
                             .status(product.get("status") != null ? product.get("status").toString() : "UNKNOWN")
                             .build());
@@ -385,4 +439,21 @@ public class GroupIntegrationService {
         // 고정 시크릿을 Base64로 인코딩
         return Base64.getEncoder().encodeToString(secret.getBytes());
     }
+
+    /**
+     * 대출 상품인지 확인하는 유틸리티 메서드
+     */
+    private boolean isLoanProduct(String productType) {
+        if (productType == null) {
+            return false;
+        }
+        
+        return "LOAN".equals(productType) || 
+               "MORTGAGE".equals(productType) || 
+               "AUTO_LOAN".equals(productType) || 
+               "GREEN_LOAN".equals(productType) ||
+               "PERSONAL_LOAN".equals(productType) ||
+               "BUSINESS_LOAN".equals(productType);
+    }
+
 }

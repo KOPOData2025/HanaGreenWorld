@@ -65,9 +65,9 @@ public class TeamService {
                 .findFirst()
                 .orElse(null);
         
-        // 완료된 챌린지 수 계산
-        Integer completedChallenges = challengeRecordRepository.countByMember_MemberIdAndVerificationStatus(
-                currentMember.getMemberId(), "VERIFIED");
+        // 완료된 팀 챌린지 수 계산 (팀 챌린지만)
+        Integer completedChallenges = challengeRecordRepository.countByTeamIdAndVerificationStatus(
+                team.getId(), "APPROVED");
 
         boolean isLeader = team.isLeader(currentMember.getMemberId());
 
@@ -281,7 +281,11 @@ public class TeamService {
                 .findFirst()
                 .orElse(null);
         
-        return TeamResponse.from(team, stats, leader, currentChallenge, 0);
+        // 완료된 팀 챌린지 수 계산 (팀 챌린지만)
+        Integer completedChallenges = challengeRecordRepository.countByTeamIdAndVerificationStatus(
+                team.getId(), "APPROVED");
+        
+        return TeamResponse.from(team, stats, leader, currentChallenge, completedChallenges);
     }
 
     public List<TeamResponse> getTeamList() {
@@ -298,7 +302,11 @@ public class TeamService {
                     .findFirst()
                     .orElse(null);
             
-            return TeamResponse.from(team, stats, leader, currentChallenge, 0);
+            // 완료된 팀 챌린지 수 계산 (팀 챌린지만)
+            Integer completedChallenges = challengeRecordRepository.countByTeamIdAndVerificationStatus(
+                    team.getId(), "APPROVED");
+            
+            return TeamResponse.from(team, stats, leader, currentChallenge, completedChallenges);
         }).collect(Collectors.toList());
     }
 

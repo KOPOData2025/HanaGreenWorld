@@ -125,6 +125,7 @@ export default function EcoChallengeScreen({ onBack, onShowHistory, onShowSeedHi
   const [uploadingImages, setUploadingImages] = useState<Record<string, boolean>>({});
   const [pendingImages, setPendingImages] = useState<Record<string, string>>({});
   const [aiResults, setAiResults] = useState<Record<string, any>>({});
+  const [pointsAwarded, setPointsAwarded] = useState<Record<string, number>>({});
   const [verifyingChallenges, setVerifyingChallenges] = useState<Record<string, boolean>>({});
   const [participatedChallenges, setParticipatedChallenges] = useState<Record<string, boolean>>({});
   const [teamChallengeStatus, setTeamChallengeStatus] = useState<Record<string, string>>({});
@@ -250,15 +251,65 @@ export default function EcoChallengeScreen({ onBack, onShowHistory, onShowSeedHi
     }, 0);
   }, [completed, challenges, aiResults]);
   
+  // SeedHistoryScreen과 동일한 로직으로 씨앗 계산을 위한 상태
+  const [apiSeeds, setApiSeeds] = useState(0);
+  
+  // API에서 직접 씨앗 수 계산 (SeedHistoryScreen과 동일한 로직)
+  useEffect(() => {
+    const calculateSeedsFromApi = async () => {
+      try {
+        const participations = await challengeApi.getMyChallengeParticipations();
+        const totalSeeds = participations.reduce((sum, record) => {
+          // APPROVED 상태인 챌린지만 씨앗 계산에 포함 (SeedHistoryScreen과 동일)
+          if (record.verificationStatus === 'APPROVED') {
+            return sum + (record.pointsAwarded || 0);
+          }
+          return sum;
+        }, 0);
+        setApiSeeds(totalSeeds);
+        console.log('API에서 계산한 총 씨앗:', totalSeeds);
+      } catch (error) {
+        console.error('API에서 씨앗 계산 실패:', error);
+        setApiSeeds(0);
+      }
+    };
+    
+    calculateSeedsFromApi();
+  }, [pointsAwarded]); // pointsAwarded가 변경될 때마다 재계산
+
   const completedReward = useMemo(() => {
-    return challenges.reduce((acc, c) => {
+    // API에서 계산한 씨앗 수를 우선 사용, 없으면 기존 로직 사용
+    if (apiSeeds > 0) {
+      console.log('API 씨앗 수 사용:', apiSeeds);
+      return apiSeeds;
+    }
+    
+    // 기존 로직 (fallback)
+    const fallbackResult = challenges.reduce((acc, c) => {
       const challengeId = c.id.toString();
-      // 성공한 챌린지만 계산 (승인된 것만)
-      const isSuccess = completed[challengeId] || 
-                        aiResults[challengeId]?.verificationStatus === 'APPROVED';
-      return acc + (isSuccess ? (c.points || 0) : 0);
+      // 참여한 챌린지인지 확인
+      const isParticipated = participatedChallenges[challengeId] || 
+                            participationStatus[challengeId] !== 'NOT_PARTICIPATED' ||
+                            teamChallengeStatus[challengeId] !== 'NOT_STARTED';
+      
+      if (isParticipated) {
+        // 실제 받은 씨앗만 계산 (pointsAwarded가 있는 경우만)
+        const actualReward = pointsAwarded[challengeId] || 0;
+        console.log(`챌린지 ${c.id} (${c.title}): 참여함, 실제 받은 씨앗: ${actualReward}, 기본 포인트: ${c.points}, pointsAwarded: ${pointsAwarded[challengeId]}`);
+        return acc + actualReward;
+      }
+      
+      return acc;
     }, 0);
-  }, [completed, challenges, aiResults]);
+    
+    console.log('참여한 챌린지 총 씨앗 (fallback):', fallbackResult);
+    console.log('participatedChallenges 상태:', participatedChallenges);
+    console.log('participationStatus 상태:', participationStatus);
+    console.log('teamChallengeStatus 상태:', teamChallengeStatus);
+    console.log('pointsAwarded 상태:', pointsAwarded);
+    
+    return fallbackResult;
+  }, [apiSeeds, participatedChallenges, participationStatus, teamChallengeStatus, challenges, pointsAwarded]);
   
   const completedCount = useMemo(() => {
     return challenges.filter(c => {
@@ -322,6 +373,7 @@ export default function EcoChallengeScreen({ onBack, onShowHistory, onShowSeedHi
         const imagesState: Record<string, string> = {};
         const pendingImagesState: Record<string, string> = {};
         const aiResultsState: Record<string, any> = {};
+        const pointsAwardedState: Record<string, number> = {};
         
         participations.forEach(participation => {
           const challengeId = participation.challenge.id.toString();
@@ -383,6 +435,19 @@ export default function EcoChallengeScreen({ onBack, onShowHistory, onShowSeedHi
               verifiedAt: participation.verifiedAt // 완료 날짜 추가
             };
           }
+          
+          // 실제 받은 씨앗/포인트 정보 저장
+          if (isTeamChallenge) {
+            // 팀 챌린지의 경우 teamScoreAwarded 사용
+            if (participation.teamScoreAwarded && participation.teamScoreAwarded > 0) {
+              pointsAwardedState[challengeId] = participation.teamScoreAwarded;
+            }
+          } else {
+            // 개인 챌린지의 경우 pointsAwarded 사용
+            if (participation.pointsAwarded && participation.pointsAwarded > 0) {
+              pointsAwardedState[challengeId] = participation.pointsAwarded;
+            }
+          }
         });
         
         // 참여하지 않은 챌린지들에 대해서도 NOT_PARTICIPATED 상태 설정
@@ -403,11 +468,13 @@ export default function EcoChallengeScreen({ onBack, onShowHistory, onShowSeedHi
         setCapturedImages(imagesState);
         setPendingImages(pendingImagesState);
         setAiResults(aiResultsState);
+        setPointsAwarded(pointsAwardedState);
         
         console.log('완료된 챌린지 데이터 로드 완료:', { 
           completedState, 
           participationStatusState, 
-          teamChallengeStatusState 
+          teamChallengeStatusState,
+          pointsAwardedState
         });
       } catch (error) {
         console.error('완료된 챌린지 데이터 로드 실패:', error);
@@ -934,7 +1001,6 @@ export default function EcoChallengeScreen({ onBack, onShowHistory, onShowSeedHi
                 </View>
                 <View style={styles.challengeInfo}>
                   <View style={styles.challengeTitleRow}>
-                    <Text style={styles.challengeTitle}>{c.title}</Text>
                     <View style={styles.badgeContainer}>
                       {c.isTeamChallenge && (
                         <View style={styles.teamBadge}>
@@ -948,24 +1014,30 @@ export default function EcoChallengeScreen({ onBack, onShowHistory, onShowSeedHi
                         </View>
                       )}
                     </View>
+                    <Text style={styles.challengeTitle}>{c.title}</Text>
                   </View>
                   {/* <Text style={styles.challengeDescription}>{c.description}</Text> */}
                 </View>
                 <View style={styles.challengeReward}>
                   <Text style={styles.challengeRewardText}>
                     {c.isTeamChallenge 
-                      ? `+${c.teamScore || 0} P` 
-                      : `+${c.points} 씨앗`
+                      ? (pointsAwarded[c.id.toString()] 
+                          ? `+${pointsAwarded[c.id.toString()]}P` 
+                          : `+${c.teamScore || 0}P`) 
+                      : (pointsAwarded[c.id.toString()] 
+                          ? `+${pointsAwarded[c.id.toString()]} 씨앗` 
+                          : `+${c.points} 씨앗`)
                     }
                   </Text>
                   {(completed[c.id.toString()] || 
-                    aiResults[c.id.toString()] ||
-                    c.isParticipated) && (
+                    (aiResults[c.id.toString()] && aiResults[c.id.toString()].verificationStatus === 'APPROVED')) && (
                     <View style={styles.completedIndicator}>
                       <Ionicons name="checkmark-circle" size={24} color="#10B981" />
                     </View>
                   )}
-                  {participatedChallenges[c.id.toString()] && !completed[c.id.toString()] && !aiResults[c.id.toString()] && (
+                  {participatedChallenges[c.id.toString()] && 
+                   !completed[c.id.toString()] && 
+                   !(aiResults[c.id.toString()] && aiResults[c.id.toString()].verificationStatus === 'APPROVED') && (
                     <View style={styles.participatedIndicator}>
                       <Text style={styles.participatedText}>도전중</Text>
                     </View>
@@ -1000,7 +1072,6 @@ export default function EcoChallengeScreen({ onBack, onShowHistory, onShowSeedHi
             </View>
             <View style={styles.completedInfo}>
               <Text style={styles.completedTitle}>참여한 챌린지</Text>
-              <Text style={styles.completedSubtitle}>참여한 챌린지 내역 보기</Text>
             </View>
             <View style={styles.completedReward}>
               <Text style={styles.completedRewardText}>{completedReward} 씨앗</Text>
@@ -1333,16 +1404,6 @@ export default function EcoChallengeScreen({ onBack, onShowHistory, onShowSeedHi
                       <Text style={styles.aiResultLabel}>설명:</Text>
                       <Text style={styles.aiResultDescription}>
                         {aiResults[selected.id.toString()].explanation}
-                      </Text>
-                    </View>
-                  )}
-                  {aiResults[selected.id.toString()].aiDetectedItems && (
-                    <View style={styles.aiResultRow}>
-                      <Text style={styles.aiResultLabel}>감지 항목:</Text>
-                      <Text style={styles.aiResultValue}>
-                        {Array.isArray(aiResults[selected.id.toString()].aiDetectedItems) 
-                          ? aiResults[selected.id.toString()].aiDetectedItems.join(', ')
-                          : aiResults[selected.id.toString()].aiDetectedItems}
                       </Text>
                     </View>
                   )}
@@ -1765,6 +1826,8 @@ const styles = StyleSheet.create({
     fontSize: 18 * SCALE,
     fontWeight: '700',
     color: '#111827',
+    marginLeft: 4 * SCALE,
+    marginBottom: 8 * SCALE,
     flex: 1,
   },
   badgeContainer: {
@@ -1821,7 +1884,8 @@ const styles = StyleSheet.create({
   },
   participatedIndicator: {
     alignItems: 'center',
-    marginTop: 4 * SCALE,
+    marginTop: -4 * SCALE,
+    // marginTop: 4 * SCALE,
   },
   participatedText: {
     fontSize: 12 * SCALE,

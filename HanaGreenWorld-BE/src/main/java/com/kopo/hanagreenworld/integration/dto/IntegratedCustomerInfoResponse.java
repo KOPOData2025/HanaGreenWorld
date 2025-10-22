@@ -87,6 +87,8 @@ public class IntegratedCustomerInfoResponse {
             // 대출 관련 추가 필드들
             private BigDecimal remainingAmount; // 잔여금액 (대출용)
             private BigDecimal monthlyPayment; // 월상환금 (대출용)
+            private BigDecimal monthlyInterest; // 월 이자 (대출용)
+            private BigDecimal totalMonthlyPayment; // 총 월 납입금 (대출용)
             private LocalDateTime startDate; // 대출 시작일
         }
     }

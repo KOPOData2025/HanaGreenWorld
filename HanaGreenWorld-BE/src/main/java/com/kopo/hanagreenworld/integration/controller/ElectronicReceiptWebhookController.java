@@ -104,7 +104,7 @@ public class ElectronicReceiptWebhookController {
             EcoSeedEarnRequest earnRequest = EcoSeedEarnRequest.builder()
                 .category(PointCategory.ELECTRONIC_RECEIPT)
                 .pointsAmount(3)
-                .description(String.format("전자영수증 발급", 
+                .description(String.format("전자확인증 발급", 
                     transactionId, transactionType, transactionAmount))
                 .build();
 

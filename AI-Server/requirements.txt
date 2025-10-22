@@ -22,3 +22,8 @@ langchain>=0.1.0
 langchain-community>=0.0.10
 langchain-openai>=0.0.5
 langchain-chroma>=0.1.0
+
+# AI 검증 고도화 - CLIP 모델 통합
+torch>=2.0.0
+transformers>=4.30.0
+sentencepiece>=0.1.99

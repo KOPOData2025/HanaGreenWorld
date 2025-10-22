@@ -13,11 +13,12 @@ export type LocalChallenge = ApiChallenge & {
 
 // 챌린지 아이콘 매핑 (기존 UI와 동일)
 export const CHALLENGE_ICONS: Record<string, any> = {
+  'REUSABLE_BAG_EXTENDED': require('../../assets/hana3dIcon/hanaIcon3d_4_121.png'),
   'REUSABLE_BAG': require('../../assets/hana3dIcon/hanaIcon3d_107.png'),
   'PLUGGING': require('../../assets/plugging.png'),
   'TEAM_PLUGGING': require('../../assets/green_team.png'),
   'WEEKLY_STEPS': require('../../assets/hana3dIcon/hanaIcon3d_123.png'),
-  'TEAM_WALKING': require('../../assets/hana3dIcon/hanaIcon3d_4_33.png'),
+  'TEAM_WALKING': require('../../assets/hana3dIcon/hanaIcon3d_123.png'),
   'TUMBLER_CHALLENGE': require('../../assets/tumbler.png'),
   'RECYCLE': require('../../assets/hana3dIcon/zero_waste.png'),
   'ELECTRONIC_RECEIPT': require('../../assets/electronic_receipt.png'),

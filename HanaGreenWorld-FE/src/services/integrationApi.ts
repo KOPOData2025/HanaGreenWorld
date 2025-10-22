@@ -75,6 +75,8 @@ export interface LoanAccountInfo {
   baseRate?: number;
   preferentialRate?: number;
   monthlyPayment: number;
+  monthlyInterest?: number; // 월 이자
+  totalMonthlyPayment?: number; // 총 월 납입금
   startDate: string;
   maturityDate: string;
   status: string;

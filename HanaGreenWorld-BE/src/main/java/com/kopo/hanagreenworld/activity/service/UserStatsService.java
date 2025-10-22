@@ -125,7 +125,7 @@ public class UserStatsService {
             if (betterUsers == 0) {
                 return 1.0; // 1등은 상위 1%
             }
-            double percentage = ((double)(totalUsers - betterUsers) / totalUsers) * 100;
+            double percentage = ((double) betterUsers / totalUsers) * 100;
             return Math.max(1.0, Math.min(99.0, percentage));
         } catch (Exception e) {
             return 30.0;
@@ -145,7 +145,7 @@ public class UserStatsService {
             if (betterUsers == 0) {
                 return 1.0; // 1등은 상위 1%
             }
-            double percentage = ((double)(totalUsers - betterUsers) / totalUsers) * 100;
+            double percentage = ((double) betterUsers / totalUsers) * 100;
             return Math.max(1.0, Math.min(99.0, percentage));
         } catch (Exception e) {
             return 30.0;
@@ -165,7 +165,7 @@ public class UserStatsService {
             if (betterUsers == 0) {
                 return 1.0; // 1등은 상위 1%
             }
-            double percentage = ((double)(totalUsers - betterUsers) / totalUsers) * 100;
+            double percentage = ((double)betterUsers / totalUsers) * 100;
             return Math.max(1.0, Math.min(99.0, percentage));
         } catch (Exception e) {
             return 30.0;
@@ -185,7 +185,7 @@ public class UserStatsService {
             if (betterUsers == 0) {
                 return 1.0; // 1등은 상위 1%
             }
-            double percentage = ((double)(totalUsers - betterUsers) / totalUsers) * 100;
+            double percentage = ((double) betterUsers / totalUsers) * 100;
             return Math.max(1.0, Math.min(99.0, percentage));
         } catch (Exception e) {
             return 30.0;

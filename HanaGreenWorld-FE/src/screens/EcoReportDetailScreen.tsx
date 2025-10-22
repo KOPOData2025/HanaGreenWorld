@@ -162,7 +162,7 @@ export default function EcoReportDetailScreen({ report, onBack, onHome }: Props)
           <Text style={styles.sectionTitle}>금융 혜택</Text>
           <View style={styles.benefitRow}>
             <View style={styles.benefitItem}>
-              <Text style={styles.benefitLabel}>적금 우대금리</Text>
+              <Text style={styles.benefitLabel}>적금 혜택</Text>
               <Text style={styles.benefitValue}>+{safeNumber(report.financialBenefit.savingsInterest).toLocaleString()}원</Text>
             </View>
             <View style={styles.benefitItem}>

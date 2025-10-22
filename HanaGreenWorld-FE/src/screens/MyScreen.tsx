@@ -155,12 +155,12 @@ export function MyScreen({
     }
   };
 
-  // 친환경 혜택 데이터 (실제 거래내역 기반)
+  // 친환경 혜택 데이터 (card_transactions에서 친환경 태그 필터링)
   const allEcoBenefits = transactions && transactions.length > 0 ? 
     transactions
       .filter(transaction => {
         // 친환경 관련 카테고리만 필터링
-        const ecoCategories = ['유기농식품', '공유킥보드', '전기차', '친환경브랜드', '중고거래', '리필샵', '대중교통'];
+        const ecoCategories = ['유기농식품', '공유킥보드', '전기차', '친환경브랜드', '중고거래', '리필샵', '대중교통', '친환경', '재활용', '제로웨이스트', '친환경뷰티', '친환경쇼핑', '유기농카페'];
         return ecoCategories.includes(transaction.category);
       })
       .map((transaction, index) => ({
@@ -179,10 +179,10 @@ export function MyScreen({
       })) : [
       {
         id: '1',
-        storeName: '그린마트 강남점',
+        storeName: '그린마트 가산점',
         type: 'ECO_FOOD',
-        amount: '+2,500원',
-        date: '9월 15일',
+        amount: '+1,500원',
+        date: '10월 15일',
         cardNumber: '3524',
         icon: getCategoryIcon('ECO_FOOD')
       },

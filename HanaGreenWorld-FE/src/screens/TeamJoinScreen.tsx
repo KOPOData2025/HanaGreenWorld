@@ -48,7 +48,7 @@ const TeamPreview: React.FC<TeamPreviewProps> = ({ team, onCancel, onJoin, loadi
             <Text style={styles.teamRank}>{team.rank}위</Text>
           </View>
         </View>
-        <Text style={styles.teamSlogan}>"{team.slogan}"</Text>
+        <Text style={styles.teamSlogan}>{team.slogan}</Text>
         <View style={styles.teamStats}>
           <View style={styles.statItem}>
             <View style={styles.statIcon}>
@@ -737,7 +737,6 @@ const styles = StyleSheet.create({
     color: '#64748B',
     marginBottom: 20,
     lineHeight: 22,
-    fontStyle: 'italic',
   },
   teamStats: {
     flexDirection: 'row',

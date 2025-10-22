@@ -50,6 +50,11 @@ public class BankAccountsResponse {
         private BigDecimal loanAmount;
         private BigDecimal remainingAmount;
         private BigDecimal interestRate;
+        private BigDecimal baseRate; // 기본금리
+        private BigDecimal preferentialRate; // 우대금리
+        private BigDecimal monthlyPayment; // 월 상환금 (원금)
+        private BigDecimal monthlyInterest; // 월 이자
+        private BigDecimal totalMonthlyPayment; // 총 월 납입금 (월 상환금 + 월 이자)
         private LocalDateTime openDate;
         private LocalDateTime maturityDate;
         private String status;

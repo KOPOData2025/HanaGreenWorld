@@ -5,6 +5,7 @@ import com.kopo.hanagreenworld.common.util.SecurityUtil;
 import com.kopo.hanagreenworld.integration.dto.*;
 import com.kopo.hanagreenworld.integration.service.GroupIntegrationService;
 import com.kopo.hanagreenworld.integration.service.HanamoneyIntegrationService;
+import com.kopo.hanagreenworld.integration.util.LoanCalculationUtil;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
@@ -225,7 +226,7 @@ public class GroupIntegrationController {
             IntegratedCustomerInfoResponse integrated = groupIntegrationService.getIntegratedCustomerInfo(request);
             
             // 은행 계좌 응답 생성
-            BankAccountsResponse response = buildBankAccountsResponse(integrated);
+            BankAccountsResponse response = buildBankAccountsResponse(integrated, memberId);
             return ResponseEntity.ok(ApiResponse.success("은행 계좌 목록 조회가 완료되었습니다.", response));
 
         } catch (Exception e) {
@@ -299,7 +300,7 @@ public class GroupIntegrationController {
                 .build();
     }
 
-    private BankAccountsResponse buildBankAccountsResponse(IntegratedCustomerInfoResponse integrated) {
+    private BankAccountsResponse buildBankAccountsResponse(IntegratedCustomerInfoResponse integrated, Long memberId) {
         java.util.List<BankAccountsResponse.SavingsAccountInfo> savingsAccounts = new java.util.ArrayList<>();
         java.util.List<BankAccountsResponse.LoanAccountInfo> loanAccounts = new java.util.ArrayList<>();
         java.util.List<BankAccountsResponse.InvestmentAccountInfo> investmentAccounts = new java.util.ArrayList<>();
@@ -348,15 +349,60 @@ public class GroupIntegrationController {
                 for (IntegratedCustomerInfoResponse.BankInfo.ProductDetail product : integrated.getBankInfo().getProductDetails()) {
                     if ("LOAN".equals(product.getProductType()) || "MORTGAGE".equals(product.getProductType()) || 
                         "AUTO_LOAN".equals(product.getProductType()) || "GREEN_LOAN".equals(product.getProductType())) {
+                        
+                        // 대출 정보 설정
+                        java.math.BigDecimal loanAmount = product.getAmount();
+                        java.math.BigDecimal remainingAmount = product.getRemainingAmount() != null ? product.getRemainingAmount() : loanAmount;
+                        java.math.BigDecimal interestRate = product.getInterestRate() != null ? product.getInterestRate() : new java.math.BigDecimal("4.5");
+                        java.time.LocalDateTime startDate = product.getStartDate() != null ? product.getStartDate() : java.time.LocalDateTime.now().minusYears(2);
+                        java.time.LocalDateTime maturityDate = product.getMaturityDate() != null ? product.getMaturityDate() : java.time.LocalDateTime.now().plusYears(3);
+                        
+                        // 월 상환금과 월 이자 계산
+                        LoanCalculationUtil.LoanPaymentInfo paymentInfo = LoanCalculationUtil.calculateLoanPaymentInfo(
+                                loanAmount,
+                                remainingAmount,
+                                interestRate,
+                                startDate,
+                                maturityDate
+                        );
+                        
+                        // 기존 monthlyPayment가 있으면 우선 사용
+                        java.math.BigDecimal finalMonthlyPayment = paymentInfo.getMonthlyPayment();
+                        if (product.getMonthlyPayment() != null && product.getMonthlyPayment().compareTo(java.math.BigDecimal.ZERO) > 0) {
+                            finalMonthlyPayment = product.getMonthlyPayment();
+                        }
+                        
+                        // 월 이자는 항상 현재 잔여금액 기준으로 계산
+                        java.math.BigDecimal monthlyInterest = LoanCalculationUtil.calculateMonthlyInterest(
+                                remainingAmount,
+                                interestRate.divide(new java.math.BigDecimal("100")) // 퍼센트를 소수로 변환
+                        );
+                        
+                        // 총 월 납입금 = 월 상환금 + 월 이자
+                        java.math.BigDecimal totalMonthlyPayment = finalMonthlyPayment.add(monthlyInterest);
+                        
+                        // 우대금리는 기존 데이터에서 가져오기
+                        java.math.BigDecimal preferentialRate;
+                        if (product.getPreferentialRate() != null) {
+                            preferentialRate = product.getPreferentialRate();
+                        } else {
+                            preferentialRate = new java.math.BigDecimal("1.0"); // 기본 우대금리 1.0%
+                        }
+                        
                         loanAccounts.add(BankAccountsResponse.LoanAccountInfo.builder()
                                 .accountNumber(product.getProductCode())
                                 .productName(product.getProductName())
                                 .accountType(product.getProductType())
-                                .loanAmount(product.getAmount())
-                                .remainingAmount(product.getRemainingAmount() != null ? product.getRemainingAmount() : product.getAmount())
-                                .interestRate(product.getInterestRate() != null ? product.getInterestRate() : new java.math.BigDecimal("4.5"))
-                                .openDate(product.getStartDate() != null ? product.getStartDate() : java.time.LocalDateTime.now().minusYears(2))
-                                .maturityDate(product.getMaturityDate() != null ? product.getMaturityDate() : java.time.LocalDateTime.now().plusYears(3))
+                                .loanAmount(loanAmount)
+                                .remainingAmount(remainingAmount)
+                                .interestRate(interestRate)
+                                .baseRate(product.getBaseRate() != null ? product.getBaseRate() : new java.math.BigDecimal("4.0"))
+                                .preferentialRate(preferentialRate)
+                                .monthlyPayment(finalMonthlyPayment)
+                                .monthlyInterest(monthlyInterest)
+                                .totalMonthlyPayment(totalMonthlyPayment)
+                                .openDate(startDate)
+                                .maturityDate(maturityDate)
                                 .status(product.getStatus())
                                 .build());
                     }
@@ -449,4 +495,5 @@ public class GroupIntegrationController {
         private int totalBenefits;
         private boolean isPremiumEligible;
     }
+
 }

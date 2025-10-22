@@ -146,7 +146,7 @@ export default function SeedConversionScreen({ onBack }: SeedConversionScreenPro
             <Text style={styles.ruleText}>• 1일 최대 전환 가능 원큐씨앗은 500,000개입니다.</Text>
           </View>
           <View style={styles.ruleItem}>
-            <Text style={styles.ruleText}>• 원큐씨앗은 2025년 12월 10일까지만 유효합니다.</Text>
+            <Text style={styles.ruleText}>• 원큐씨앗은 적립일을 기준으로 3년 후 소멸됩니다.</Text>
           </View>
         </View>
 

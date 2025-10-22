@@ -36,6 +36,9 @@ public interface ChallengeRecordRepository extends JpaRepository<ChallengeRecord
     // 팀별 챌린지 참여 기록 조회
     List<ChallengeRecord> findByTeamId(Long teamId);
     
+    // 팀별 성공한 챌린지 개수 조회
+    int countByTeamIdAndVerificationStatus(Long teamId, String verificationStatus);
+    
     // 행동 패턴 분석용 - 최근 제출 이력 조회
     List<ChallengeRecord> findByMember_MemberIdAndCreatedAtAfter(Long memberId, LocalDateTime since);
     

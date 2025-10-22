@@ -3,6 +3,8 @@ package com.kopo.hanagreenworld.integration.service;
 import com.kopo.hanagreenworld.integration.dto.CardTransactionResponse;
 import com.kopo.hanagreenworld.integration.dto.CardConsumptionSummaryResponse;
 import com.kopo.hanagreenworld.integration.dto.CardIntegratedInfoResponse;
+import com.kopo.hanagreenworld.merchant.domain.EcoMerchantTransaction;
+import com.kopo.hanagreenworld.merchant.repository.EcoMerchantTransactionRepository;
 import com.kopo.hanagreenworld.member.domain.Member;
 import com.kopo.hanagreenworld.member.repository.MemberRepository;
 import com.kopo.hanagreenworld.integration.service.GroupIntegrationService;
@@ -15,6 +17,9 @@ import org.springframework.web.client.RestTemplate;
 
 import java.util.*;
 import java.util.Base64;
+import java.util.stream.Collectors;
+import java.util.Arrays;
+import java.time.LocalDate;
 
 @Slf4j
 @Service
@@ -24,6 +29,7 @@ public class CardTransactionIntegrationService {
     private final RestTemplate restTemplate;
     private final MemberRepository memberRepository;
     private final GroupIntegrationService groupIntegrationService;
+    private final EcoMerchantTransactionRepository ecoMerchantTransactionRepository;
 
     @Value("${integration.card.url}")
     private String cardServiceUrl;
@@ -396,11 +402,11 @@ public class CardTransactionIntegrationService {
             // 카드 거래내역 조회
             List<CardTransactionResponse> transactions = getCardTransactions(memberId);
             
-            // 월간 소비현황 조회
-            CardConsumptionSummaryResponse consumptionSummary = getConsumptionSummary(memberId);
+            // 친환경 소비현황 조회 (card_transactions에서 친환경 태그 필터링)
+            CardConsumptionSummaryResponse consumptionSummary = getEcoConsumptionSummaryFromCardTransactions(memberId);
             
-            // 친환경 혜택 정보 조회
-            Map<String, Object> ecoBenefits = getDefaultEcoBenefits();
+            // 친환경 혜택 정보 조회 (eco_merchant_transactions에서 이번달만)
+            Map<String, Object> ecoBenefits = getEcoBenefitsFromEcoMerchantTransactions(memberId);
             
             // 카드 목록 조회 (하나카드 서버에서)
             CardIntegratedInfoResponse.CardListInfo cardList = getCardList(memberId);
@@ -415,6 +421,7 @@ public class CardTransactionIntegrationService {
             return response;
 
         } catch (Exception e) {
+            log.error("카드 통합 정보 조회 실패 - 회원ID: {}, 에러: {}", memberId, e.getMessage(), e);
             return CardIntegratedInfoResponse.builder()
                     .cardList(CardIntegratedInfoResponse.CardListInfo.builder()
                             .totalCards(0L)
@@ -447,6 +454,172 @@ public class CardTransactionIntegrationService {
             "ecoMerchantCount", 0
         ));
         return benefits;
+    }
+
+
+    public CardConsumptionSummaryResponse getEcoConsumptionSummaryFromCardTransactions(Long memberId) {
+        try {
+            log.info("친환경 소비현황 조회 시작 (card_transactions 기반, 이번달만) - 회원ID: {}", memberId);
+            
+            // 모든 카드 거래내역 조회
+            List<CardTransactionResponse> allTransactions = getCardTransactions(memberId);
+            
+            // 이번달 거래만 필터링
+            LocalDate now = LocalDate.now();
+            LocalDate startOfMonth = now.withDayOfMonth(1);
+            LocalDate endOfMonth = now.withDayOfMonth(now.lengthOfMonth());
+            
+            // 친환경 태그가 붙은 거래만 필터링 (이번달만)
+            List<CardTransactionResponse> ecoTransactions = allTransactions.stream()
+                    .filter(transaction -> {
+                        // 이번달 거래인지 확인
+                        LocalDate transactionDate = LocalDate.parse(transaction.getTransactionDate().substring(0, 10));
+                        boolean isCurrentMonth = !transactionDate.isBefore(startOfMonth) && !transactionDate.isAfter(endOfMonth);
+                        
+                        // 친환경 거래인지 확인
+                        boolean isEco = isEcoTransaction(transaction);
+                        
+                        return isCurrentMonth && isEco;
+                    })
+                    .collect(Collectors.toList());
+            
+            if (ecoTransactions.isEmpty()) {
+                log.info("친환경 태그가 붙은 거래내역이 없습니다 - 회원ID: {}", memberId);
+                return CardConsumptionSummaryResponse.builder()
+                        .totalAmount(0L)
+                        .totalCashback(0L)
+                        .categoryAmounts(new HashMap<>())
+                        .recentTransactions(new ArrayList<>())
+                        .build();
+            }
+            
+            // 총 소비금액 계산
+            Long totalAmount = ecoTransactions.stream()
+                    .mapToLong(CardTransactionResponse::getAmount)
+                    .sum();
+            
+            // 총 캐시백 계산
+            Long totalCashback = ecoTransactions.stream()
+                    .mapToLong(CardTransactionResponse::getCashbackAmount)
+                    .sum();
+            
+            // 카테고리별 소비금액 계산
+            Map<String, Long> categoryAmounts = ecoTransactions.stream()
+                    .collect(Collectors.groupingBy(
+                            CardTransactionResponse::getCategory,
+                            Collectors.summingLong(CardTransactionResponse::getAmount)
+                    ));
+            
+            // 최근 거래내역 (최대 10건)
+            List<CardTransactionResponse> recentTransactions = ecoTransactions.stream()
+                    .limit(10)
+                    .collect(Collectors.toList());
+            
+            log.info("친환경 소비현황 조회 완료 - 회원ID: {}, 총소비: {}, 총캐시백: {}, 거래건수: {}", 
+                    memberId, totalAmount, totalCashback, ecoTransactions.size());
+            
+            return CardConsumptionSummaryResponse.builder()
+                    .totalAmount(totalAmount)
+                    .totalCashback(totalCashback)
+                    .categoryAmounts(categoryAmounts.entrySet().stream()
+                            .collect(Collectors.toMap(
+                                    Map.Entry::getKey,
+                                    entry -> entry.getValue().intValue()
+                            )))
+                    .recentTransactions(recentTransactions)
+                    .build();
+                    
+        } catch (Exception e) {
+            log.error("친환경 소비현황 조회 실패 - 회원ID: {}, 에러: {}", memberId, e.getMessage(), e);
+            return CardConsumptionSummaryResponse.builder()
+                    .totalAmount(0L)
+                    .totalCashback(0L)
+                    .categoryAmounts(new HashMap<>())
+                    .recentTransactions(new ArrayList<>())
+                    .build();
+        }
+    }
+
+    public Map<String, Object> getEcoBenefitsFromEcoMerchantTransactions(Long memberId) {
+        try {
+            log.info("친환경 혜택 정보 조회 시작 (eco_merchant_transactions 기반, 이번달만) - 회원ID: {}", memberId);
+            
+            // 이번달 친환경 가맹점 거래내역 조회
+            List<EcoMerchantTransaction> ecoTransactions = ecoMerchantTransactionRepository.findCurrentMonthTransactionsByMemberId(memberId);
+            
+            if (ecoTransactions.isEmpty()) {
+                return getDefaultEcoBenefits();
+            }
+            
+            // 총 원큐씨앗 계산
+            Long totalSeeds = ecoTransactions.stream()
+                    .mapToLong(EcoMerchantTransaction::getEarnedSeeds)
+                    .sum();
+            
+            // 총 친환경 소비금액 계산
+            Long totalEcoAmount = ecoTransactions.stream()
+                    .mapToLong(EcoMerchantTransaction::getTransactionAmount)
+                    .sum();
+            
+            // 평균 원큐씨앗 계산
+            int averageSeeds = totalSeeds.intValue() / ecoTransactions.size();
+            
+            // 친환경 가맹점 수 계산 (중복 제거)
+            long ecoMerchantCount = ecoTransactions.stream()
+                    .map(EcoMerchantTransaction::getMerchantName)
+                    .distinct()
+                    .count();
+            
+            // 혜택 목록 생성
+            List<Map<String, Object>> benefits = ecoTransactions.stream()
+                    .map(transaction -> {
+                        Map<String, Object> benefit = new HashMap<>();
+                        benefit.put("storeName", transaction.getMerchantName());
+                        benefit.put("category", transaction.getMerchantCategory());
+                        benefit.put("amount", transaction.getEarnedSeeds());
+                        benefit.put("transactionAmount", transaction.getTransactionAmount());
+                        benefit.put("transactionDate", transaction.getTransactionDate());
+                        return benefit;
+                    })
+                    .collect(Collectors.toList());
+            
+            Map<String, Object> result = new HashMap<>();
+            result.put("totalBenefits", totalSeeds);
+            result.put("benefits", benefits);
+            result.put("stats", Map.of(
+                "totalEcoTransactions", ecoTransactions.size(),
+                "totalEcoAmount", totalEcoAmount,
+                "totalAdditionalSeeds", totalSeeds,
+                "averageAdditionalSeeds", averageSeeds,
+                "ecoMerchantCount", ecoMerchantCount
+            ));
+            
+            log.info("친환경 혜택 정보 조회 완료 - 회원ID: {}, 총원큐씨앗: {}, 거래건수: {}", 
+                    memberId, totalSeeds, ecoTransactions.size());
+            
+            return result;
+                    
+        } catch (Exception e) {
+            log.error("친환경 혜택 정보 조회 실패 - 회원ID: {}, 에러: {}", memberId, e.getMessage(), e);
+            return getDefaultEcoBenefits();
+        }
+    }
+    
+    /**
+     * 거래가 친환경 거래인지 판단하는 메서드 (카테고리 기반만)
+     */
+    private boolean isEcoTransaction(CardTransactionResponse transaction) {
+        // 친환경 관련 카테고리 목록
+        List<String> ecoCategories = Arrays.asList(
+            "유기농식품", "공유킥보드", "전기차", "친환경브랜드", 
+            "중고거래", "리필샵", "대중교통", "친환경", "재활용", 
+            "제로웨이스트", "친환경뷰티", "친환경쇼핑", "유기농카페",
+            "ECO_FOOD", "ECO_SHOPPING", "ECO_TRANSPORT", "ECO_BEAUTY",
+            "ECO_LIFESTYLE", "ECO_CAFE", "ECO_MARKET"
+        );
+        
+        // 카테고리로만 판단
+        return ecoCategories.contains(transaction.getCategory());
     }
 
     private String generateMockCI(Member member) {

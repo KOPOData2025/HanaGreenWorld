@@ -21,13 +21,13 @@ type LocalChallenge = ApiChallenge & {
 // 아이콘 매핑
 const CHALLENGE_ICONS: Record<string, any> = {
   'REUSABLE_BAG': require('../../assets/hana3dIcon/hanaIcon3d_4_13.png'),
-  'REUSABLE_BAG_EXTENDED': require('../../assets/hana3dIcon/hanaIcon3d_4_13.png'),
+  'REUSABLE_BAG_EXTENDED': require('../../assets/hana3dIcon/hanaIcon3d_4_121.png'),
   'PLUGGING': require('../../assets/hana3dIcon/hanaIcon3d_4_17.png'),
   'PLUGGING_MARATHON': require('../../assets/hana3dIcon/hanaIcon3d_4_17.png'),
   'TEAM_PLUGGING': require('../../assets/hana3dIcon/hanaIcon3d_4_17.png'),
   'WEEKLY_STEPS': require('../../assets/hana3dIcon/hanaIcon3d_4_33.png'),
   'DAILY_STEPS': require('../../assets/hana3dIcon/hanaIcon3d_4_33.png'),
-  'TEAM_WALKING': require('../../assets/hana3dIcon/hanaIcon3d_4_33.png'),
+  'TEAM_WALKING': require('../../assets/hana3dIcon/hanaIcon3d_123.png'),
   'NO_PLASTIC': require('../../assets/hana3dIcon/hanaIcon3d_4_31.png'),
   'TUMBLER_CHALLENGE': require('../../assets/hana3dIcon/hanaIcon3d_4_31.png'),
   'RECYCLE': require('../../assets/hana3dIcon/hanaIcon3d_4_35.png'),

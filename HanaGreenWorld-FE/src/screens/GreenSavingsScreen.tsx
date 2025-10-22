@@ -253,7 +253,7 @@ export function GreenSavingsScreen({ onNavigateBack, onNavigateToSignup }: Green
           {expandedSections.preferentialRate && (
             <View style={styles.sectionContent}>
               <Text style={styles.preferentialTitle}>우대금리</Text>
-              <Text style={styles.preferentialSubTitle}>최대 연 <Text style={styles.preferentialItemRate}>4.00%</Text> (2025.02.13 기준, 세전)</Text>
+              <Text style={styles.preferentialSubTitle}>최대 연 <Text style={styles.preferentialItemRate}>4.00%</Text> (2025.09.13 기준, 세전)</Text>
               <Text style={styles.preferentialDesc}>
                 아래 우대항목을 충족하는 경우, 최대 연 5.00%의 우대금리를 만기해지시 제공합니다.
               </Text>

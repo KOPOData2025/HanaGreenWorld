@@ -12,6 +12,8 @@ interface LoanAccount {
   loanAmount: number;
   remainingAmount: number;
   monthlyPayment: number;
+  monthlyInterest?: number; // 월 이자
+  totalMonthlyPayment?: number; // 총 월 납입금
   interestRate: number;
   baseRate?: number;
   preferentialRate?: number;
@@ -71,11 +73,27 @@ export const BondsTab: React.FC<BondsTabProps> = ({
               <Text style={styles.earthInfoValue}>{(loan.remainingAmount || 0).toLocaleString()}원</Text>
             </View>
             <View style={styles.earthInfoRow}>
-              <Text style={styles.earthInfoLabel}>월 상환금</Text>
-              <Text style={styles.earthInfoValue}>{(loan.monthlyPayment || 0).toLocaleString()}원</Text>
+              <Text style={[styles.earthInfoLabel, { marginTop: 4 * SCALE }]}>월 상환금</Text>
+              <Text style={styles.earthInfoValue}>{(loan.totalMonthlyPayment || 0).toLocaleString()}원</Text>
+            </View>
+            <View style={styles.earthRateGroup}>
+              <View style={styles.earthRateRow}>
+                <Text style={styles.earthRateLabel}>원금 상환</Text>
+                <Text style={styles.earthRateValue}>
+                  <Text style={styles.earthRateValueNum}>{(loan.monthlyPayment || 0).toLocaleString()}</Text>
+                  <Text style={styles.earthRateValueUnit}>원</Text>
+                </Text>
+              </View>
+              <View style={styles.earthRateRow}>
+                <Text style={styles.earthRateLabel}>이자</Text>
+                <Text style={styles.earthRateValue}>
+                  <Text style={[styles.earthRateValueNum]}>{(loan.monthlyInterest || 0).toLocaleString()}</Text>
+                  <Text style={styles.earthRateValueUnit}>원</Text>
+                </Text>
+              </View>
             </View>
             
-            <View style={styles.earthRateGroup}>
+            <View style={[styles.earthRateGroup, { marginTop: 6 * SCALE }]}>
               <Text style={styles.earthRateHeader}>대출 금리</Text>
               <View style={styles.earthRateRow}>
                 <Text style={styles.earthRateLabel}>기본금리</Text>
@@ -87,7 +105,7 @@ export const BondsTab: React.FC<BondsTabProps> = ({
               <View style={styles.earthRateRow}>
                 <Text style={styles.earthRateLabel}>우대금리</Text>
                 <Text style={styles.earthRateValue}>
-                  <Text style={[styles.earthRateValueNum, { color: '#10B981' }]}>{(loan.preferentialRate || -0.50).toFixed(2)}</Text>
+                  <Text style={[styles.earthRateValueNum, { color: '#10B981' }]}>{(loan.preferentialRate || 0).toFixed(2)}</Text>
                   <Text style={styles.earthRateValueUnit}>%</Text>
                 </Text>
               </View>
@@ -206,6 +224,12 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     marginBottom: 6 * SCALE,
   },
+  earthInfoRowCompact: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 2 * SCALE,
+  },
   earthInfoLabel: {
     fontSize: 14 * SCALE,
     color: '#6B7280',
@@ -218,7 +242,6 @@ const styles = StyleSheet.create({
   
   // 금리 정보
   earthRateGroup: {
-    marginTop: 6 * SCALE,
     gap: 6 * SCALE,
   },
   earthRateHeader: {

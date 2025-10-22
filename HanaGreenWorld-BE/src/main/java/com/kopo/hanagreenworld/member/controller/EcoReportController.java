@@ -226,13 +226,15 @@ public class EcoReportController {
         
         switch (topActivity) {
             case "걷기":
-                return "자동차 말고 걷기로 탄소를 줄이셨네요!";
+                return "걸어서 지구도 지키고 건강도 지켜요!";
             case "퀴즈":
                 return "친환경 지식을 쌓아가고 계시네요!";
             case "전자영수증":
                 return "디지털 소비로 환경을 보호하고 계세요!";
             case "챌린지":
                 return "친환경 챌린지로 지구를 지키고 계세요!";
+            case "친환경가맹점":
+                return "친환경 제품 사용으로 지구를 지키고 계세요!";
             default:
                 return "친환경 활동으로 지구를 보호하고 계세요!";
         }
