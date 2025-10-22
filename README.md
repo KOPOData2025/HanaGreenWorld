@@ -36,7 +36,7 @@
 <br>
 
 ## 3. 서비스 아키텍처
-<img width="800" height="456" alt="스크린샷 2025-10-17 오후 5 34 04" src="https://github.com/user-attachments/assets/153b2928-7b58-4bd2-b0d4-cc5b47e070db" />
+<img width="800" height="456" alt="image" src="https://github.com/user-attachments/assets/a20dc363-e583-42b0-a83b-8576d2fb05a4" />
 
 - <strong>친환경 활동 & 챌린지:</strong> 환경 퀴즈, 걷기, 전자확인증 발급, 챌린지 등을 통해 자체 친환경 포인트(원큐씨앗)를 적립합니다.
 - <strong>팀 기반 소셜 기능:</strong> 팀 결성을 통해 팀 챌린지 및 점수 경쟁이 가능하며, 팀원들과 실시간 채팅이 가능합니다.
@@ -49,12 +49,7 @@
 ## 4. 시스템 아키텍처
 <img width="800" height="456" alt="스크린샷 2025-10-17 오후 5 35 25" src="https://github.com/user-attachments/assets/3f61188f-7bf4-4400-8944-7bbd7452a0ac" />
 
-<br><br>
-
-## 5. 활용 기술
-<img width="800" height="456" alt="스크린샷 2025-10-17 오후 5 37 40" src="https://github.com/user-attachments/assets/0c98c558-94a6-494b-9c49-7334e806f13b" />
-
-- <strong>하나그린세상 프론트:</strong> '하나원큐 앱' 속 서비스이기 때문에 React native, expo를 통해 개발
+- <strong>하나그린세상 프론트:</strong> '하나원큐 앱' 내 서비스라는 특성을 고려하여 React native, expo를 통해 개발
 - <strong>하나그린세상 백엔드:</strong> java, spring 활용, websocket/stomp를 통해 채팅 구현
 - <strong>하나카드 백엔드:</strong> java, spring 활용
 - <strong>하나은행 백엔드:</strong> java, spring 활용
@@ -62,9 +57,18 @@
 
 <br><br>
 
+## 5. 활용 기술
+<img width="800" height="456" alt="image" src="https://github.com/user-attachments/assets/214b53f4-359d-4df5-99d2-cada2c8aacc2" />
+
+<br><br>
+
 ## 6. 특화 기술
 ### RAG 기반 지능형 퀴즈 생성 시스템
 <img width="800" height="456" alt="스크린샷 2025-10-17 오후 5 40 24" src="https://github.com/user-attachments/assets/c02c4276-77c7-4d08-8006-d53262824b50" />
+
+### 챌린지 AI 교차 검증 시스템
+<img width="800" height="456" alt="image" src="https://github.com/user-attachments/assets/9af38c04-7bcf-4e94-93cb-3864500e9129" />
+
 
 <br><br>
 
@@ -125,4 +129,5 @@ HanaGreenWorld/
 || 2024.06.21 | SQLD (SQL 개발자)|
 || 2023.09.23 | 정보처리기사 |
 |**수상**|제13회 숭실 캡스톤디자인 경진대회 (동상)|숭실대학교 공학교육혁신센터(2023.09.19)|
-|**교육**|42Seoul|2022.07~2024.04|
+|**교육**|하나금융티아이 채용연계형 교육|2025.03~2025.10|
+||42Seoul|2022.07~2024.04|
